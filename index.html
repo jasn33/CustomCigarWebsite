@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Cigar Brand | Build Your Blend</title>
+  <link rel="stylesheet" href="Style.css" />
+</head>
+<body>
+  <div id="age-gate" class="age-gate">
+    <div class="age-card">
+      <h1>Age Verification</h1>
+      <p>You must be of legal age to view tobacco-related content.</p>
+      <p class="small-warning">
+        This demo website does not sell tobacco. Check all local, state, and federal laws before selling tobacco products online.
+      </p>
+      <div class="age-actions">
+        <button id="age-confirm" class="btn primary">I am of legal age</button>
+        <button id="age-deny" class="btn secondary">Exit</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <nav class="nav">
+      <div class="brand-mark">
+        <span class="brand-icon">◆</span>
+        <span class="brand-name">Custom House Roller's</span>
+      </div>
+
+      <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#catalog">Catalog</a>
+        <a href="#builder">Builder</a>
+        <a href="#blends">Saved Blends</a>
+        <a href="#contact">Contact</a>
+        <button id="admin-open" class="nav-admin-button" type="button">Admin</button>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">Small batch • Custom blends • Handcrafted concept</p>
+        <h1>Build a cigar blend made around your taste.</h1>
+        <p class="hero-copy">
+          Choose your wrapper, binder, and filler tobaccos. Get a live estimate for strength, flavor direction, and price before sending your custom blend request.
+        </p>
+        <div class="hero-actions">
+          <a href="#builder" class="btn primary">Start Building</a>
+          <a href="#catalog" class="btn ghost">Browse Catalog</a>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <h2>Custom Blend Preview</h2>
+        <div class="preview-row">
+          <span>Wrapper</span>
+          <strong>Maduro / Habano / Connecticut</strong>
+        </div>
+        <div class="preview-row">
+          <span>Binder</span>
+          <strong>Nicaraguan / Dominican / Honduran</strong>
+        </div>
+        <div class="preview-row">
+          <span>Filler</span>
+          <strong>Balanced by percentage</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="info-grid">
+      <article class="info-card">
+        <h3>1. Choose your cigar size</h3>
+        <p>Select a format like Robusto, Toro, Churchill, or Corona. Size affects estimated material and labor cost.</p>
+      </article>
+
+      <article class="info-card">
+        <h3>2. Pick the leaf</h3>
+        <p>Choose wrapper, binder, and filler tobaccos from available inventory-style options.</p>
+      </article>
+
+      <article class="info-card">
+        <h3>3. Save your blend</h3>
+        <p>Name the blend, review the estimate, and save it locally as a future custom order concept.</p>
+      </article>
+    </section>
+
+    <section id="catalog" class="catalog-section">
+      <div class="section-heading">
+        <p class="eyebrow">Leaf Catalog</p>
+        <h2>Browse Available Tobaccos</h2>
+        <p>Review wrapper, binder, and filler options before building your custom cigar blend.</p>
+      </div>
+
+      <div class="catalog-toolbar">
+        <div class="catalog-filters" aria-label="Tobacco catalog filters">
+          <button type="button" class="catalog-filter active" data-catalog-filter="all">All</button>
+          <button type="button" class="catalog-filter" data-catalog-filter="wrapper">Wrapper</button>
+          <button type="button" class="catalog-filter" data-catalog-filter="binder">Binder</button>
+          <button type="button" class="catalog-filter" data-catalog-filter="filler">Filler</button>
+          <button type="button" class="catalog-filter" data-catalog-filter="in-stock">In Stock</button>
+        </div>
+
+        <div class="catalog-search-wrap">
+          <label for="catalog-search">Search tobacco</label>
+          <input id="catalog-search" type="search" placeholder="Search by name, origin, flavor..." />
+        </div>
+      </div>
+
+      <div id="catalog-grid" class="catalog-grid"></div>
+    </section>
+
+    <section id="builder" class="builder-section">
+      <div class="section-heading">
+        <p class="eyebrow">Custom Builder</p>
+        <h2>Build Your Cigar</h2>
+        <p>This is a working front-end prototype. It calculates estimated price and strength, but it does not process payments yet.</p>
+      </div>
+
+      <div class="builder-layout">
+        <form id="builder-form" class="builder-card">
+          <div class="field-group">
+            <label for="blend-name">Blend name</label>
+            <input id="blend-name" type="text" placeholder="Example: Midnight Reserve" />
+          </div>
+
+          <div class="field-group">
+            <label for="cigar-size">Cigar size</label>
+            <select id="cigar-size"></select>
+          </div>
+
+          <div class="order-options-grid">
+            <div class="field-group">
+              <label for="pack-size">Pack / box size</label>
+              <select id="pack-size">
+                <option value="1">Single cigar</option>
+                <option value="5">5 pack</option>
+                <option value="10">Box of 10</option>
+                <option value="20">Box of 20</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="custom-quantity">Quantity</label>
+              <input id="custom-quantity" type="number" min="1" value="1" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="wrapper-select">Wrapper</label>
+            <select id="wrapper-select"></select>
+          </div>
+
+          <div class="field-group">
+            <label for="binder-select">Binder</label>
+            <select id="binder-select"></select>
+          </div>
+
+          <div class="filler-panel">
+            <div class="filler-header">
+              <div>
+                <h3>Filler Blend</h3>
+                <p>Choose one or more filler tobaccos. Percentages should total 100%.</p>
+              </div>
+              <span id="filler-total" class="total-pill">0%</span>
+            </div>
+
+            <div class="filler-add-row">
+              <select id="filler-select"></select>
+              <input id="filler-percent" type="number" min="1" max="100" value="25" />
+              <button id="add-filler" type="button" class="btn secondary">Add Filler</button>
+            </div>
+
+            <ul id="filler-list" class="filler-list"></ul>
+            <p id="filler-warning" class="warning-text"></p>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="reset-builder" class="btn ghost">Reset</button>
+            <button type="submit" class="btn primary">Save Blend</button>
+          </div>
+        </form>
+
+        <aside class="summary-card">
+          <h3>Blend Summary</h3>
+
+          <div class="summary-block">
+            <span>Estimated Strength</span>
+            <strong id="summary-strength">—</strong>
+          </div>
+
+          <div class="summary-block">
+            <span>Estimated Unit Price</span>
+            <strong id="summary-price">$0.00</strong>
+          </div>
+
+          <div class="summary-block">
+            <span>Order Quantity</span>
+            <strong id="summary-quantity">1 cigar</strong>
+          </div>
+
+          <div class="summary-block">
+            <span>Estimated Order Total</span>
+            <strong id="summary-order-total">$0.00</strong>
+          </div>
+
+          <div class="summary-block">
+            <span>Flavor Direction</span>
+            <strong id="summary-flavor">Choose tobaccos to begin.</strong>
+          </div>
+
+          <div class="blend-output">
+            <h4>Current Build</h4>
+            <p id="summary-output">No blend selected yet.</p>
+          </div>
+
+          <div class="legal-note">
+            <strong>Important:</strong>
+            This prototype is for planning only. Real tobacco sales require age verification, licensing, tax compliance, shipping compliance, and a tobacco-friendly payment processor.
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="blends" class="saved-section">
+      <div class="section-heading">
+        <p class="eyebrow">Local Saves</p>
+        <h2>Saved Custom Blends</h2>
+        <p>Saved blends are stored in this browser only for now.</p>
+      </div>
+
+      <div class="saved-actions">
+        <button id="clear-saved" class="btn ghost">Clear Saved Blends</button>
+      </div>
+
+      <div id="saved-blends" class="saved-grid"></div>
+    </section>
+
+    <section id="contact" class="contact-section">
+      <div class="contact-card">
+        <p class="eyebrow">Next Stage</p>
+        <h2>Ready for orders later?</h2>
+        <p>
+          The next build stage can add a backend admin dashboard, customer order requests, inventory control, and eventually payment integration with a processor that allows cigar/tobacco sales.
+        </p>
+        <a href="mailto:your-email@example.com" class="btn primary">Contact the Brand</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> Your Cigar Brand. Demo site only. Tobacco sales are restricted and regulated.</p>
+  </footer>
+
+  <section id="admin-panel" class="admin-panel hidden" aria-label="Admin product manager">
+    <div class="admin-backdrop" id="admin-close-backdrop"></div>
+
+    <div class="admin-modal">
+      <div class="admin-header">
+        <div>
+          <p class="eyebrow">Admin Mode</p>
+          <h2>Tobacco Product Manager</h2>
+          <p>Add wrapper, binder, and filler tobacco products to the catalog and builder.</p>
+        </div>
+        <button id="admin-close" class="admin-close-button" type="button">×</button>
+      </div>
+
+      <div id="admin-login" class="admin-login">
+        <div class="field-group">
+          <label for="admin-password">Admin password</label>
+          <input id="admin-password" type="password" placeholder="Enter admin password" />
+        </div>
+        <button id="admin-login-button" class="btn primary" type="button">Enter Admin Mode</button>
+        <p class="admin-help">Prototype password: <strong>admin123</strong>. Change this later when you build a real backend.</p>
+      </div>
+
+      <div id="admin-content" class="admin-content hidden">
+        <form id="admin-product-form" class="admin-form">
+          <input id="admin-edit-id" type="hidden" />
+
+          <div class="admin-form-grid">
+            <div class="field-group">
+              <label for="admin-product-name">Tobacco name</label>
+              <input id="admin-product-name" type="text" placeholder="Example: Pennsylvania Broadleaf" required />
+            </div>
+
+            <div class="field-group">
+              <label for="admin-product-role">Cigar role</label>
+              <select id="admin-product-role" required>
+                <option value="wrapper">Wrapper</option>
+                <option value="binder">Binder</option>
+                <option value="filler">Filler</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="admin-product-origin">Origin</label>
+              <input id="admin-product-origin" type="text" placeholder="Example: Nicaragua" />
+            </div>
+
+            <div class="field-group">
+              <label for="admin-product-strength">Strength 1-5</label>
+              <input id="admin-product-strength" type="number" min="1" max="5" value="3" />
+            </div>
+
+            <div class="field-group">
+              <label for="admin-product-cost">Cost estimate</label>
+              <input id="admin-product-cost" type="number" min="0" step="0.01" value="1.00" />
+            </div>
+
+            <div class="field-group">
+              <label for="admin-product-stock">Stock amount</label>
+              <input id="admin-product-stock" type="number" min="0" step="1" value="10" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="admin-product-image">Image URL</label>
+            <input id="admin-product-image" type="url" placeholder="https://example.com/tobacco-image.jpg" />
+          </div>
+
+          <div class="field-group">
+            <label for="admin-product-flavor">Flavor notes</label>
+            <input id="admin-product-flavor" type="text" placeholder="Example: cocoa, cedar, pepper, earth" />
+          </div>
+
+          <div class="field-group">
+            <label for="admin-product-description">Description</label>
+            <textarea id="admin-product-description" rows="3" placeholder="Short description shown in catalog"></textarea>
+          </div>
+
+          <div class="admin-actions">
+            <button class="btn primary" type="submit">Save Tobacco Product</button>
+            <button id="admin-clear-form" class="btn ghost" type="button">Clear Form</button>
+            <button id="admin-export-products" class="btn secondary" type="button">Export Products JSON</button>
+            <button id="admin-reset-products" class="btn ghost danger-action" type="button">Reset Custom Products</button>
+          </div>
+        </form>
+
+        <div class="admin-product-list-section">
+          <div class="admin-list-header">
+            <h3>Custom Admin Products</h3>
+            <span id="admin-product-count">0 products</span>
+          </div>
+          <div id="admin-product-list" class="admin-product-list"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="Script.js"></script>
+</body>
+</html>
