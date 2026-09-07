@@ -18,6 +18,8 @@ import shutil
 import sqlite3
 import tkinter as tk
 import uuid
+import zipfile
+from datetime import datetime
 from tkinter import ttk, messagebox, filedialog
 
 try:
@@ -39,10 +41,22 @@ THUMBNAIL_SIZE = (140, 140)
 # ---------------------------------------------------------------------------
 class Database:
     def __init__(self, path):
-        self.conn = sqlite3.connect(path)
+        self.path = path
+        self._connect()
+
+    def _connect(self):
+        self.conn = sqlite3.connect(self.path)
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.row_factory = sqlite3.Row
         self._init_schema()
+
+    def reconnect(self):
+        """Close and reopen the connection, e.g. after the db file was replaced by a restore."""
+        try:
+            self.conn.close()
+        except sqlite3.Error:
+            pass
+        self._connect()
 
     def _init_schema(self):
         cur = self.conn.cursor()
@@ -727,6 +741,116 @@ class EstimatorTab(ttk.Frame):
 
 
 # ---------------------------------------------------------------------------
+# Backup / Restore tab
+# ---------------------------------------------------------------------------
+class BackupTab(ttk.Frame):
+    def __init__(self, master, db, on_restore=None):
+        super().__init__(master, padding=8)
+        self.db = db
+        self.on_restore = on_restore
+        self._build()
+
+    def _build(self):
+        ttk.Label(self, text="Backup & Restore", font=("Helvetica", 13, "bold")).pack(anchor="w", pady=(0, 10))
+        info = (
+            "Create a backup file containing all of your inventory, blends, and "
+            "photos. Save it somewhere safe (Google Drive, email to yourself, "
+            "USB, computer, etc.) and restore from it later if this device is "
+            "lost, the app is reinstalled, or data is accidentally deleted."
+        )
+        ttk.Label(self, text=info, wraplength=380, justify="left").pack(anchor="w", pady=(0, 16))
+
+        ttk.Button(self, text="Create Backup (Download)...", command=self.create_backup).pack(fill="x", pady=6)
+        ttk.Button(self, text="Restore From Backup (Upload)...", command=self.restore_backup).pack(fill="x", pady=6)
+
+        self.status_var = tk.StringVar(value="")
+        ttk.Label(self, textvariable=self.status_var, wraplength=380, justify="left").pack(anchor="w", pady=(16, 0))
+
+    def _write_backup_zip(self, dest_path):
+        with zipfile.ZipFile(dest_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            if os.path.isfile(DB_PATH):
+                zf.write(DB_PATH, arcname="cigar_inventory.db")
+            if os.path.isdir(PHOTOS_DIR):
+                for fname in os.listdir(PHOTOS_DIR):
+                    fpath = os.path.join(PHOTOS_DIR, fname)
+                    if os.path.isfile(fpath):
+                        zf.write(fpath, arcname="photos/{}".format(fname))
+
+    def create_backup(self):
+        self.db.conn.commit()
+        default_name = "cigar_inventory_backup_{}.zip".format(datetime.now().strftime("%Y%m%d_%H%M%S"))
+        dest = filedialog.asksaveasfilename(
+            title="Save backup as",
+            defaultextension=".zip",
+            initialfile=default_name,
+            filetypes=[("Zip files", "*.zip")],
+        )
+        if not dest:
+            return
+        try:
+            self._write_backup_zip(dest)
+        except OSError as e:
+            messagebox.showerror("Backup failed", str(e))
+            return
+        self.status_var.set("Last backup saved to:\n{}".format(dest))
+        messagebox.showinfo("Backup created", "Backup saved to:\n{}".format(dest))
+
+    def restore_backup(self):
+        src = filedialog.askopenfilename(
+            title="Select a backup file to restore",
+            filetypes=[("Zip backup files", "*.zip"), ("All files", "*.*")],
+        )
+        if not src:
+            return
+        try:
+            with zipfile.ZipFile(src, "r") as zf:
+                names = zf.namelist()
+                if "cigar_inventory.db" not in names:
+                    messagebox.showerror(
+                        "Invalid backup",
+                        "This file doesn't look like a valid backup (no cigar_inventory.db found inside).",
+                    )
+                    return
+                if not messagebox.askyesno(
+                    "Confirm restore",
+                    "Restoring will replace ALL current inventory, blends, and photos "
+                    "with the contents of this backup file. Your current data will be "
+                    "saved as a safety copy first, but this action cannot be undone "
+                    "from within the app.\n\nContinue?",
+                ):
+                    return
+                self._safety_copy_current_data()
+                self.db.conn.close()
+                if os.path.isdir(PHOTOS_DIR):
+                    shutil.rmtree(PHOTOS_DIR)
+                os.makedirs(PHOTOS_DIR, exist_ok=True)
+                zf.extract("cigar_inventory.db", APP_DIR)
+                for name in names:
+                    if name.startswith("photos/") and not name.endswith("/"):
+                        zf.extract(name, APP_DIR)
+        except (OSError, zipfile.BadZipFile) as e:
+            messagebox.showerror("Restore failed", str(e))
+            self.db.reconnect()
+            return
+
+        self.db.reconnect()
+        self.status_var.set("Restored from:\n{}".format(src))
+        messagebox.showinfo("Restore complete", "Your data has been restored.")
+        if self.on_restore:
+            self.on_restore()
+
+    def _safety_copy_current_data(self):
+        if not os.path.isfile(DB_PATH):
+            return
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safety_path = os.path.join(APP_DIR, "before_restore_{}.zip".format(ts))
+        try:
+            self._write_backup_zip(safety_path)
+        except OSError:
+            pass
+
+
+# ---------------------------------------------------------------------------
 # Main application
 # ---------------------------------------------------------------------------
 class CigarInventoryApp(tk.Tk):
@@ -753,14 +877,20 @@ class CigarInventoryApp(tk.Tk):
         self.estimator_tab = EstimatorTab(notebook, self.db)
         self.blend_tab = BlendTab(notebook, self.db, on_change=self._on_data_changed)
         self.inventory_tab = InventoryTab(notebook, self.db, on_change=self._on_data_changed)
+        self.backup_tab = BackupTab(notebook, self.db, on_restore=self.refresh_all)
 
         notebook.add(self.inventory_tab, text="Inventory")
         notebook.add(self.blend_tab, text="Blends")
         notebook.add(self.estimator_tab, text="Batch Estimate")
+        notebook.add(self.backup_tab, text="Backup")
 
     def _on_data_changed(self):
         self.blend_tab.refresh_blend_list()
         self.estimator_tab.refresh_blend_list()
+
+    def refresh_all(self):
+        self.inventory_tab.clear_form()
+        self.inventory_tab.refresh()
 
 
 def main():

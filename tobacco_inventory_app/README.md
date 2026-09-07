@@ -25,6 +25,12 @@ package (see below) — everything else needs no extra pip installs.
   highlights shortfalls in red, and totals the estimated tobacco cost. A
   "Deduct Needed Amounts From Inventory" button lets you subtract the batch
   from stock once you've actually rolled it.
+- **Backup tab** — bundle your whole inventory, blends, and photos into a
+  single `.zip` file you choose where to save ("Create Backup"), and load
+  one back later ("Restore From Backup") if the app is reinstalled, the
+  device is lost, or data gets deleted. Restoring automatically saves a
+  timestamped safety copy of whatever was on the device first, in case the
+  wrong file gets picked.
 
 Data is stored in `cigar_inventory.db` (SQLite), created next to the script
 the first time you run it, so everything persists between sessions. Photos
@@ -46,10 +52,14 @@ you attach are copied into a `photos/` folder created alongside it.
    browser (or paste its contents into a new file in Pydroid's editor).
 5. Tap the ▶ Run button at the bottom right.
 6. The app window opens sized for a phone screen. Use the tabs at the top
-   (Inventory / Blends / Batch Estimate) to move between features. On the
-   Inventory tab, **Choose Photo...** opens Pydroid's file picker so you can
-   pick a picture already on your phone (e.g. one you snapped with the
-   camera app and saved to your gallery).
+   (Inventory / Blends / Batch Estimate / Backup) to move between features.
+   On the Inventory tab, **Choose Photo...** opens Pydroid's file picker so
+   you can pick a picture already on your phone (e.g. one you snapped with
+   the camera app and saved to your gallery). On the Backup tab, **Create
+   Backup** opens the same picker to choose where to save the `.zip` file
+   (e.g. your Downloads folder, so it's easy to move to Google Drive or
+   email to yourself), and **Restore From Backup** lets you pick a `.zip`
+   file to load back in.
 
 The database file and `photos/` folder are created in the same folder as the
 script, so keep them together if you move the app around.
@@ -76,3 +86,7 @@ installers; on Linux install your distro's `python3-tk` package).
    each leaf you need, whether you have enough, and the total tobacco cost.
    After rolling, use **Deduct Needed Amounts From Inventory** to update
    your stock levels.
+4. On the **Backup** tab, hit **Create Backup** every so often (or whenever
+   you make a lot of changes) and save the `.zip` file somewhere off the
+   device — Google Drive, email, a computer, etc. If you ever lose your data,
+   use **Restore From Backup** and pick that file to get everything back.
