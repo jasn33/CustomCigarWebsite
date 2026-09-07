@@ -4,15 +4,18 @@ A phone-friendly Tkinter app for managing cigar tobacco inventory, building
 blends out of any combination of wrapper, binder, and filler leaves, and
 estimating how much of each leaf a production batch will need.
 
-It's a single file (`cigar_inventory.py`) using only the Python standard
-library (`tkinter` + `sqlite3`), so it runs on a desktop and inside **Pydroid
-3** on Android with no extra pip installs.
+It's a single file (`cigar_inventory.py`) built on `tkinter` + `sqlite3`
+from the Python standard library, so it runs on a desktop and inside
+**Pydroid 3** on Android. Photo thumbnails additionally need the **Pillow**
+package (see below) — everything else needs no extra pip installs.
 
 ## Features
 
 - **Inventory tab** — add/edit/delete tobacco leaves. Each leaf has a name,
   type (Wrapper / Binder / Filler), origin, quantity on hand (grams), cost
-  per gram, and notes.
+  per gram, notes, and an optional photo. Selecting a leaf in the list shows
+  its thumbnail; use **Choose Photo...** to attach or replace one and
+  **Remove Photo** to clear it.
 - **Blends tab** — create named blends and add any number of components to
   them, each pulled from your inventory and tagged as a wrapper, binder, or
   filler, with a grams-per-cigar amount. A blend isn't limited to one leaf
@@ -24,7 +27,8 @@ library (`tkinter` + `sqlite3`), so it runs on a desktop and inside **Pydroid
   from stock once you've actually rolled it.
 
 Data is stored in `cigar_inventory.db` (SQLite), created next to the script
-the first time you run it, so everything persists between sessions.
+the first time you run it, so everything persists between sessions. Photos
+you attach are copied into a `photos/` folder created alongside it.
 
 ## Running on your phone with Pydroid 3
 
@@ -33,19 +37,27 @@ the first time you run it, so everything persists between sessions.
    already — if a run ever complains `tkinter` is missing, open Pydroid's
    menu → **Pydroid repository plugin** (also on the Play Store) and install
    it; that adds Tkinter support.
-3. Get `cigar_inventory.py` onto your phone — e.g. copy it via Google Drive,
+3. For photo thumbnails, install **Pillow**: open Pydroid's built-in **Pip**
+   tab (menu → Pip) and install the `pillow` package, or run
+   `pip install pillow` in Pydroid's terminal. Without Pillow the rest of the
+   app still works, but the photo buttons will show an error.
+4. Get `cigar_inventory.py` onto your phone — e.g. copy it via Google Drive,
    USB, email, or `git clone` this repo — then open it from Pydroid's file
    browser (or paste its contents into a new file in Pydroid's editor).
-4. Tap the ▶ Run button at the bottom right.
-5. The app window opens sized for a phone screen. Use the tabs at the top
-   (Inventory / Blends / Batch Estimate) to move between features.
+5. Tap the ▶ Run button at the bottom right.
+6. The app window opens sized for a phone screen. Use the tabs at the top
+   (Inventory / Blends / Batch Estimate) to move between features. On the
+   Inventory tab, **Choose Photo...** opens Pydroid's file picker so you can
+   pick a picture already on your phone (e.g. one you snapped with the
+   camera app and saved to your gallery).
 
-The database file is created in the same folder as the script, so keep them
-together if you move the app around.
+The database file and `photos/` folder are created in the same folder as the
+script, so keep them together if you move the app around.
 
 ## Running on desktop
 
 ```bash
+pip install pillow   # optional, enables photo thumbnails
 python3 cigar_inventory.py
 ```
 

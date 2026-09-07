@@ -14,14 +14,24 @@ this script, so your inventory and blends persist between runs.
 """
 
 import os
+import shutil
 import sqlite3
 import tkinter as tk
-from tkinter import ttk, messagebox
+import uuid
+from tkinter import ttk, messagebox, filedialog
+
+try:
+    from PIL import Image, ImageTk
+except ImportError:
+    Image = None
+    ImageTk = None
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(APP_DIR, "cigar_inventory.db")
+PHOTOS_DIR = os.path.join(APP_DIR, "photos")
 
 ROLES = ("Wrapper", "Binder", "Filler")
+THUMBNAIL_SIZE = (140, 140)
 
 
 # ---------------------------------------------------------------------------
@@ -45,10 +55,14 @@ class Database:
                 origin TEXT DEFAULT '',
                 quantity_g REAL NOT NULL DEFAULT 0,
                 cost_per_g REAL NOT NULL DEFAULT 0,
-                notes TEXT DEFAULT ''
+                notes TEXT DEFAULT '',
+                photo TEXT DEFAULT ''
             )
             """
         )
+        existing_columns = {row["name"] for row in cur.execute("PRAGMA table_info(tobacco)")}
+        if "photo" not in existing_columns:
+            cur.execute("ALTER TABLE tobacco ADD COLUMN photo TEXT DEFAULT ''")
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS blends (
@@ -85,21 +99,21 @@ class Database:
         cur.execute("SELECT * FROM tobacco WHERE id=?", (tobacco_id,))
         return cur.fetchone()
 
-    def add_tobacco(self, name, type_, origin, quantity_g, cost_per_g, notes):
+    def add_tobacco(self, name, type_, origin, quantity_g, cost_per_g, notes, photo=""):
         cur = self.conn.cursor()
         cur.execute(
-            "INSERT INTO tobacco (name, type, origin, quantity_g, cost_per_g, notes) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (name, type_, origin, quantity_g, cost_per_g, notes),
+            "INSERT INTO tobacco (name, type, origin, quantity_g, cost_per_g, notes, photo) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (name, type_, origin, quantity_g, cost_per_g, notes, photo),
         )
         self.conn.commit()
         return cur.lastrowid
 
-    def update_tobacco(self, tobacco_id, name, type_, origin, quantity_g, cost_per_g, notes):
+    def update_tobacco(self, tobacco_id, name, type_, origin, quantity_g, cost_per_g, notes, photo=""):
         self.conn.execute(
-            "UPDATE tobacco SET name=?, type=?, origin=?, quantity_g=?, cost_per_g=?, notes=? "
+            "UPDATE tobacco SET name=?, type=?, origin=?, quantity_g=?, cost_per_g=?, notes=?, photo=? "
             "WHERE id=?",
-            (name, type_, origin, quantity_g, cost_per_g, notes, tobacco_id),
+            (name, type_, origin, quantity_g, cost_per_g, notes, photo, tobacco_id),
         )
         self.conn.commit()
 
@@ -191,6 +205,8 @@ class InventoryTab(ttk.Frame):
         self.db = db
         self.on_change = on_change
         self.selected_id = None
+        self._current_thumb = None
+        os.makedirs(PHOTOS_DIR, exist_ok=True)
         self._build()
         self.refresh()
 
@@ -223,6 +239,7 @@ class InventoryTab(ttk.Frame):
         self.qty_var = tk.StringVar(value="0")
         self.cost_var = tk.StringVar(value="0")
         self.notes_var = tk.StringVar()
+        self.photo_var = tk.StringVar(value="")
 
         def row(label, widget_factory, r):
             ttk.Label(form, text=label).grid(row=r, column=0, sticky="w", pady=3)
@@ -240,6 +257,21 @@ class InventoryTab(ttk.Frame):
         row("Quantity on hand (g)", lambda: ttk.Entry(form, textvariable=self.qty_var), 3)
         row("Cost per gram ($)", lambda: ttk.Entry(form, textvariable=self.cost_var), 4)
         row("Notes", lambda: ttk.Entry(form, textvariable=self.notes_var), 5)
+
+        ttk.Label(form, text="Photo").grid(row=6, column=0, sticky="nw", pady=3)
+        photo_frame = ttk.Frame(form)
+        photo_frame.grid(row=6, column=1, sticky="ew", pady=3)
+
+        self.photo_preview = ttk.Label(
+            photo_frame, text="No Photo", anchor="center",
+            relief="groove", width=16, background="#f0f0f0",
+        )
+        self.photo_preview.pack(side="left", padx=(0, 8))
+
+        photo_btns = ttk.Frame(photo_frame)
+        photo_btns.pack(side="left", fill="y")
+        ttk.Button(photo_btns, text="Choose Photo...", command=self.choose_photo).pack(fill="x", pady=2)
+        ttk.Button(photo_btns, text="Remove Photo", command=self.remove_photo).pack(fill="x", pady=2)
 
         btns = ttk.Frame(self)
         btns.pack(fill="x", pady=8)
@@ -263,6 +295,8 @@ class InventoryTab(ttk.Frame):
         self.qty_var.set(str(rec["quantity_g"]))
         self.cost_var.set(str(rec["cost_per_g"]))
         self.notes_var.set(rec["notes"])
+        self.photo_var.set(rec["photo"] or "")
+        self._update_preview()
 
     def clear_form(self):
         self.selected_id = None
@@ -273,6 +307,52 @@ class InventoryTab(ttk.Frame):
         self.qty_var.set("0")
         self.cost_var.set("0")
         self.notes_var.set("")
+        self.photo_var.set("")
+        self._update_preview()
+
+    def choose_photo(self):
+        if Image is None or ImageTk is None:
+            messagebox.showerror(
+                "Pillow not installed",
+                "Photo support requires the Pillow package.\nInstall it with: pip install pillow",
+            )
+            return
+        path = filedialog.askopenfilename(
+            title="Select a photo",
+            filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp *.webp"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            ext = os.path.splitext(path)[1].lower() or ".jpg"
+            new_name = uuid.uuid4().hex + ext
+            os.makedirs(PHOTOS_DIR, exist_ok=True)
+            shutil.copyfile(path, os.path.join(PHOTOS_DIR, new_name))
+        except OSError as e:
+            messagebox.showerror("Could not load photo", str(e))
+            return
+        self.photo_var.set(new_name)
+        self._update_preview()
+
+    def remove_photo(self):
+        self.photo_var.set("")
+        self._update_preview()
+
+    def _update_preview(self):
+        filename = self.photo_var.get()
+        full_path = os.path.join(PHOTOS_DIR, filename) if filename else None
+        if not filename or Image is None or not os.path.isfile(full_path):
+            self._current_thumb = None
+            self.photo_preview.configure(image="", text="No Photo")
+            return
+        try:
+            img = Image.open(full_path)
+            img.thumbnail(THUMBNAIL_SIZE)
+            self._current_thumb = ImageTk.PhotoImage(img)
+            self.photo_preview.configure(image=self._current_thumb, text="")
+        except Exception:
+            self._current_thumb = None
+            self.photo_preview.configure(image="", text="No Photo")
 
     def _read_form(self):
         name = self.name_var.get().strip()
@@ -280,15 +360,18 @@ class InventoryTab(ttk.Frame):
             raise ValueError("Name is required")
         qty = parse_float(self.qty_var.get(), "Quantity")
         cost = parse_float(self.cost_var.get(), "Cost per gram")
-        return name, self.type_var.get(), self.origin_var.get().strip(), qty, cost, self.notes_var.get().strip()
+        return (
+            name, self.type_var.get(), self.origin_var.get().strip(), qty, cost,
+            self.notes_var.get().strip(), self.photo_var.get(),
+        )
 
     def add(self):
         try:
-            name, type_, origin, qty, cost, notes = self._read_form()
+            name, type_, origin, qty, cost, notes, photo = self._read_form()
         except ValueError as e:
             messagebox.showerror("Invalid input", str(e))
             return
-        self.db.add_tobacco(name, type_, origin, qty, cost, notes)
+        self.db.add_tobacco(name, type_, origin, qty, cost, notes, photo)
         self.clear_form()
         self.refresh()
 
@@ -297,11 +380,11 @@ class InventoryTab(ttk.Frame):
             messagebox.showinfo("No selection", "Select a tobacco leaf in the table first.")
             return
         try:
-            name, type_, origin, qty, cost, notes = self._read_form()
+            name, type_, origin, qty, cost, notes, photo = self._read_form()
         except ValueError as e:
             messagebox.showerror("Invalid input", str(e))
             return
-        self.db.update_tobacco(self.selected_id, name, type_, origin, qty, cost, notes)
+        self.db.update_tobacco(self.selected_id, name, type_, origin, qty, cost, notes, photo)
         self.refresh()
 
     def delete(self):
