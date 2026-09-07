@@ -17,6 +17,7 @@ import os
 import shutil
 import sqlite3
 import tkinter as tk
+import tkinter.font as tkfont
 import uuid
 import zipfile
 from datetime import datetime
@@ -865,7 +866,12 @@ class CigarInventoryApp(tk.Tk):
         except tk.TclError:
             pass
         style.configure(".", font=("Helvetica", 11))
-        style.configure("Treeview", rowheight=26, font=("Helvetica", 10))
+        tree_font = tkfont.Font(family="Helvetica", size=10)
+        # Compute row height from the font's actual rendered metrics rather than a
+        # fixed pixel value - a hardcoded number clips text on devices (e.g. Pydroid
+        # on Android) where Tk applies a different display scale than desktop.
+        row_height = tree_font.metrics("linespace") + 14
+        style.configure("Treeview", rowheight=row_height, font=("Helvetica", 10))
         style.configure("Treeview.Heading", font=("Helvetica", 10, "bold"))
         style.configure("TButton", padding=6)
 
