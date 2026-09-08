@@ -868,9 +868,12 @@ class CigarInventoryApp(tk.Tk):
         style.configure(".", font=("Helvetica", 11))
         tree_font = tkfont.Font(family="Helvetica", size=10)
         # Compute row height from the font's actual rendered metrics rather than a
-        # fixed pixel value - a hardcoded number clips text on devices (e.g. Pydroid
-        # on Android) where Tk applies a different display scale than desktop.
-        row_height = tree_font.metrics("linespace") + 14
+        # fixed pixel value - a hardcoded number clips/crowds text on devices (e.g.
+        # Pydroid on Android) where Tk applies a different display scale than
+        # desktop. The extra margin and floor are generous on purpose: an
+        # oversized row just adds a little whitespace, but an undersized one
+        # makes adjacent rows overlap and look cut off.
+        row_height = max(int(tree_font.metrics("linespace") * 1.6) + 12, 34)
         style.configure("Treeview", rowheight=row_height, font=("Helvetica", 10))
         style.configure("Treeview.Heading", font=("Helvetica", 10, "bold"))
         style.configure("TButton", padding=6)
